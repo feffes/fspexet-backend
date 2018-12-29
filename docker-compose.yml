@@ -1,0 +1,49 @@
+version: '3.6'
+
+services:
+  server:
+    image: golang:1.11.4
+    networks:
+      - internal
+    volumes:
+      - .:/app
+      - cache:/go/pkg/mod
+    ports:
+      - 5000:5000
+    working_dir: /app
+    command: go run server.go
+    container_name: fspexet-backend
+
+  postgres:
+    restart: always
+    image: sameersbn/postgresql:10
+    networks:
+      - internal
+    ports:
+      - "5432:5432"
+    environment:
+      - DEBUG=false
+
+      - DB_USER=fspex
+      - DB_PASS=godtyckligt
+      - DB_NAME=fspex
+  #    - DB_TEMPLATE=
+
+  #    - DB_EXTENSION=
+
+  #    - REPLICATION_MODE=
+  #    - REPLICATION_USER=
+  #    - REPLICATION_PASS=
+  #    - REPLICATION_SSLMODE=
+    volumes:
+      - db:/var/lib/postgresql
+    container_name: fspexet-backend-postgres
+
+
+networks:
+  internal:
+    driver: bridge
+    name: fspexet-backend-internal
+volumes:
+  cache:
+  db:
