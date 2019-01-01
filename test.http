@@ -1,0 +1,7 @@
+POST http://localhost:5000/token HTTP/1.1
+content-type: application/json
+
+{
+    userid: "feffe"
+    passwor: "mypassword :)"
+}

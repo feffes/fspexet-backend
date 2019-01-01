@@ -1,16 +1,25 @@
 package auth
 
 import (
-	"github.com/gorilla/context"
+	"crypto/rsa"
+	"log"
+	"time"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/request"
 	"fmt"
 	"net/http"
 	"encoding/json"
 )
+var(
+	//PublicKey decryption key
+	PublicKey *rsa.PublicKey//[]byte
+	//PrivateKey encryption key
+	PrivateKey *rsa.PrivateKey//[]byte
+)
 
 //User struct, might be placed in model in future? as AuthUser, different from normal User. Maybe same idk lol gotta think about it
 type User struct {
-	Username   string `form:"userid" json:"userid" binding:"required"`
+	Username string `form:"userid" json:"userid" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
 }
 // JwtToken is holds token string that goes back to the client
@@ -26,47 +35,71 @@ type Exception struct {
 // CreateToken creates new token for users on login
 func CreateToken(w http.ResponseWriter, r *http.Request) {
 	var u User
-	_ = json.NewDecoder(r.Body).Decode(&u)
-	// never store password in token!
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
-		"username": u.Username,
-		"password": u.Password,
-	})
-	// secret argument should be a special and unique string
-	tokenString, err := token.SignedString([]byte("secret"))
-	if err != nil {
-		fmt.Println(err)
+
+	log.Println(string(encodePrivateKeyToPEM(PrivateKey)[:]))
+	log.Println(string(encodePublicKeyToPEM(PublicKey)[:]))
+	err := json.NewDecoder(r.Body).Decode(&u)
+	if err != nil{
+		// HANDLE IT
 	}
-	json.NewEncoder(w).Encode(JwtToken{Token: tokenString})
+	//Handle auth here? probably in another method in the chain though
+	// AKA Compare with database > this method > next and if it fucks up anywhere in the chain return 403
+	
+	signer:= jwt.New(jwt.GetSigningMethod("RS512"))
+	//set claims
+	claims := make(jwt.MapClaims)
+	claims["iss"] = "admin"
+	claims["exp"] = time.Now().Add(time.Minute * 24).Unix()
+	signer.Claims = claims
+
+	log.Println(signer)
+
+	tokenString, err := signer.SignedString(PrivateKey)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error signing token: %v\n", err)
+	}else {
+		response := JwtToken{tokenString}
+		JSONResponse(response, w)
+	}
+
 }
 
 // VerifyToken runs as middleware before "next" to auth the user
 func VerifyToken(next http.HandlerFunc) http.HandlerFunc {
 	// return a HandlerFunc that performs authourisation
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// get token as an authorisation header from request header
-		authorisationHeader := r.Header.Get("authorization")
-		// make sure authorisation header is not empty
-		if authorisationHeader != "" {
-			// We only need to check that authorisation header is not empty
-			token, err := jwt.Parse(authorisationHeader, func(token *jwt.Token) (interface{}, error) {
-				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("There was an error")
-				}
-				return []byte("secret"), nil
+		//validate token
+		token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
+			func(token *jwt.Token) (interface{}, error) {
+				return PublicKey, nil
 			})
-			if err != nil {
-				json.NewEncoder(w).Encode(Exception{Message: err.Error()})
-				return
-			}
+
+		if err == nil {
 			if token.Valid {
-				context.Set(r, "decoded", token.Claims)
 				next(w, r)
 			} else {
-				json.NewEncoder(w).Encode(Exception{Message: "Invalid authorization token"})
+				w.WriteHeader(http.StatusUnauthorized)
+				fmt.Fprint(w, "Token is not valid")
 			}
 		} else {
-			json.NewEncoder(w).Encode(Exception{Message: "An authorization header is required"})
+			w.WriteHeader(http.StatusUnauthorized)
+			fmt.Fprint(w, "Unauthorised access to this resource")
 		}
 	})
+
+}
+// JSONResponse pbagbab
+func JSONResponse(response interface{}, w http.ResponseWriter) {
+
+	json, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(json)
+	
 }

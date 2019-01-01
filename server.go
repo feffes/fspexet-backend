@@ -22,6 +22,7 @@ func main() {
 	dbPass := os.Getenv("POSTGRES_PASSWORD")
 	dbName := os.Getenv("POSTGRES_DB")
 	dbSsl := os.Getenv("POSTGRES_SSL")
+	//keyDir := os.Getenv("FSPEXET_BACKEND_KEYSDIR")
 
 	options := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=%s", dbHost, dbUser, dbPass, dbName, dbSsl)
 
@@ -31,12 +32,17 @@ func main() {
         log.Panic(err)
     }
 
+	err = auth.GenRS4096KeyPair()
+	if err != nil {
+		log.Println(err)
+	}
+
 	env := &Env{db}
 	
 	m := mux.NewRouter()
 	m.HandleFunc("/news", env.newsIndex)
 	m.HandleFunc("/auth", auth.VerifyToken(env.authIndex))
-	m.HandleFunc("/token", auth.CreateToken)
+	m.HandleFunc("/token", auth.CreateToken).Methods("POST")
 	log.Println("starting on :5000")
 	http.Handle("/", m)
 	err = http.ListenAndServe(":5000", nil)
