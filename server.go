@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"git.f-spexet.se/feffe/fspexet-backend/auth"
 	"encoding/json"
     "log"
@@ -8,15 +10,24 @@ import (
 	"git.f-spexet.se/feffe/fspexet-backend/models"
 	"github.com/gorilla/mux"
 )
-
+//Env holds the datastore
 type Env struct {
     db models.Datastore
 }
 
 func main() {
 	//TODO, handle args and flags
-    db, err := models.NewDB("postgres://fspex:godtyckligt@postgres:5432/fspex?sslmode=disable")
-    if err != nil {
+	dbHost := os.Getenv("POSTGRES_HOST")
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPass := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("POSTGRES_DB")
+	dbSsl := os.Getenv("POSTGRES_SSL")
+
+	options := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=%s", dbHost, dbUser, dbPass, dbName, dbSsl)
+
+    //db, err := models.NewDB("postgres://fspex:godtyckligt@postgres:5432/fspex?sslmode=disable")
+    db, err := models.NewDB(options)
+	if err != nil {
         log.Panic(err)
     }
 

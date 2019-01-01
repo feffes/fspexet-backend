@@ -1,3 +1,6 @@
+#  WARNING   #
+# Not for production use, strictly for development
+
 version: '3.6'
 
 services:
@@ -10,32 +13,22 @@ services:
       - cache:/go/pkg/mod
     ports:
       - 5000:5000
+    env_file:
+      - ./example.db.env
+      - ./example.conf.env
     working_dir: /app
     container_name: fspexet-backend
 
   postgres:
     restart: always
-    image: sameersbn/postgresql:10
+    image: postgres:11
     networks:
       - internal
-    ports:
-      - "5432:5432"
-    environment:
-      - DEBUG=false
-
-      - DB_USER=fspex
-      - DB_PASS=godtyckligt
-      - DB_NAME=fspex
-  #    - DB_TEMPLATE=
-
-  #    - DB_EXTENSION=
-
-  #    - REPLICATION_MODE=
-  #    - REPLICATION_USER=
-  #    - REPLICATION_PASS=
-  #    - REPLICATION_SSLMODE=
+    env_file:
+      - ./example.db.env
     volumes:
       - db:/var/lib/postgresql
+      - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
     container_name: fspexet-backend-postgres
 
 
