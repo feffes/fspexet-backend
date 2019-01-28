@@ -1,5 +1,6 @@
 #  WARNING   #
 # Not for production use, strictly for development
+# Can be used as a general guideline for production
 
 version: '3.6'
 
