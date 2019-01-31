@@ -17,11 +17,6 @@ var(
 	PrivateKey *rsa.PrivateKey//[]byte
 )
 
-//User struct, might be placed in model in future? as AuthUser, different from normal User. Maybe same idk lol gotta think about it
-type User struct {
-	Username string `form:"userid" json:"userid" binding:"required"`
-	Password string `form:"password" json:"password" binding:"required"`
-}
 // JwtToken is holds token string that goes back to the client
 type JwtToken struct {
 	Token string `json:"token"`
@@ -34,8 +29,7 @@ type Exception struct {
 
 // CreateToken creates new token for users on login
 func CreateToken(w http.ResponseWriter, r *http.Request) {
-	var u User
-
+	var u AuthUser
 	log.Println(string(encodePrivateKeyToPEM(PrivateKey)[:]))
 	log.Println(string(encodePublicKeyToPEM(PublicKey)[:]))
 	err := json.NewDecoder(r.Body).Decode(&u)
@@ -48,8 +42,9 @@ func CreateToken(w http.ResponseWriter, r *http.Request) {
 	signer:= jwt.New(jwt.GetSigningMethod("RS512"))
 	//set claims
 	claims := make(jwt.MapClaims)
+	claims["id"]  = u.ID
 	claims["iss"] = "admin"
-	claims["exp"] = time.Now().Add(time.Minute * 24).Unix()
+	claims["exp"] = time.Now().Add(time.Minute * 20).Unix()
 	signer.Claims = claims
 
 	log.Println(signer)
@@ -75,21 +70,22 @@ func VerifyToken(next http.HandlerFunc) http.HandlerFunc {
 				return PublicKey, nil
 			})
 
-		if err == nil {
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			fmt.Fprint(w, "Unauthorised access to this resource")
+			
+		} else {
 			if token.Valid {
 				next(w, r)
 			} else {
 				w.WriteHeader(http.StatusUnauthorized)
 				fmt.Fprint(w, "Token is not valid")
 			}
-		} else {
-			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Unauthorised access to this resource")
 		}
 	})
 
 }
-// JSONResponse pbagbab
+// JSONResponse takes a struct for example and marshalls it into json and writes it the the response.
 func JSONResponse(response interface{}, w http.ResponseWriter) {
 
 	json, err := json.Marshal(response)

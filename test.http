@@ -1,7 +1,11 @@
 POST http://localhost:5000/token HTTP/1.1
 content-type: application/json
 
-{
-    userid: "feffe"
-    passwor: "mypassword :)"
-}
+{"ID": "feffe","Password": "losenord"}
+
+
+###
+
+GET http://localhost:5000/auth HTTP/1.1
+Content-Type: application/json
+Authorization: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NDg5NjcyMTAsImlkIjoiIiwiaXNzIjoiYWRtaW4ifQ.lNzG04Ae-qK0LTNsFOoLaTuQ-yfkf7WlfZjUD_Laz65uk3ySGRVk-OYoT1TOwrtj2QFglQnlochEdVp9DN4DFImMFqyckDaC21xknD6OW-LYpwN6KYeQhw1dycyVYvpE1d_ijP9QDRdOYfR4_ocMPos9RlCDcy4T9WukpH78gKISu0lK_TvQEyRsXRLyYwp4Plmq5_9BWryAR24_RTZTF2I2smWUDjAG3VaTnTSWQ_7-7X_PgQNjr9riw7jAOjCeg3ynM8CytQn8S1WZDGRHWZutbXoF4m97PhqaqMSbieKENJbxbQksby5GFc8vNJ3C8U_QdwLCpdlbtSu_pSWDvDb-mdyhuoEGUGuQ0Olpe4ommP-1WGMQS4d3RPA1MIWeRtNdBi27G-uGWRro8YmgxA668F_igPshO9vechrEbIeaIDLK20CeeED-finVsntMcre3usIzp9d413FGPb0m5odbXOGoNmItdE0ystoAYcPCOYMzd6lRV_625NVwfrFZK3TMnreVhabaUnZJICDLKgKDMCHSRlaHxQsSzMVbnHI0rhxDKQ6zi5-KQmvqRrUkJH65OTJ3Kiai82QCg1GMC-dYVsD6K0DNdGdML5Hissf-mZbFUl2d7BkfxJagOe6oORu2O2zEx0InAH-dqRKKm_g1lSEIvGR1XIOp18bU0Qc

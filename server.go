@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"git.f-spexet.se/feffe/fspexet-backend/auth"
+	"github.com/fspexet/fspexet-backend/auth"
 	"encoding/json"
     "log"
     "net/http"
-	"git.f-spexet.se/feffe/fspexet-backend/models"
+	"github.com/fspexet/fspexet-backend/models"
 	"github.com/gorilla/mux"
 )
 //Env holds the datastore
@@ -17,11 +17,11 @@ type Env struct {
 
 func main() {
 	//TODO, handle args and flags
-	dbHost := os.Getenv("POSTGRES_HOST")
-	dbUser := os.Getenv("POSTGRES_USER")
-	dbPass := os.Getenv("POSTGRES_PASSWORD")
-	dbName := os.Getenv("POSTGRES_DB")
-	dbSsl := os.Getenv("POSTGRES_SSL")
+	dbHost 	:= os.Getenv("POSTGRES_HOST")
+	dbUser 	:= os.Getenv("POSTGRES_USER")
+	dbPass 	:= os.Getenv("POSTGRES_PASSWORD")
+	dbName 	:= os.Getenv("POSTGRES_DB")
+	dbSsl 	:= os.Getenv("POSTGRES_SSL")
 	//keyDir := os.Getenv("FSPEXET_BACKEND_KEYSDIR")
 
 	options := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=%s", dbHost, dbUser, dbPass, dbName, dbSsl)
@@ -38,11 +38,12 @@ func main() {
 	}
 
 	env := &Env{db}
-	
+	models.DataBase = env.db
+
 	m := mux.NewRouter()
 	m.HandleFunc("/news", env.newsIndex)
-	m.HandleFunc("/auth", auth.VerifyToken(env.authIndex))
-	m.HandleFunc("/token", auth.CreateToken).Methods("POST")
+	m.HandleFunc("/auth", auth.VerifyToken(env.authIndex)).Methods("GET")
+	m.HandleFunc("/token", auth.LoginMiddleware(auth.CreateToken)).Methods("POST")
 	log.Println("starting on :5000")
 	http.Handle("/", m)
 	err = http.ListenAndServe(":5000", nil)
@@ -68,10 +69,9 @@ func (env *Env) newsIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
-
-		//fmt.Fprintf(w, "%s, %s, %s, %s, %s \n", bk.ID, bk.Title, bk.Author, bk.Content, bk.Time)
 }
 
 func (env *Env) authIndex(w http.ResponseWriter, req *http.Request) {
 	log.Println("authed :)")
 }
+

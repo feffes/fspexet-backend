@@ -5,8 +5,11 @@ import (
     "database/sql"
 )
 
+var DataBase Datastore
+
 type Datastore interface {
-    AllNews() ([]*News, error)
+	AllNews() ([]*News, error)
+	UserID(id string) (User, error)
 }
 
 type DB struct {

@@ -33,3 +33,13 @@ func (db *DB) AllNews() ([]*News, error) {
     }
     return bks, nil
 }
+
+func (db *DB) NewsID(id string) (News, error) {
+	row := db.QueryRow("SELECT * FROM news WHERE ID=$1", id)
+	nws := News{}
+	err := row.Scan(&nws.ID, &nws.Title, &nws.Author, &nws.Content, &nws.Time)
+	if err != nil {
+		return nws, err
+	}
+	return nws, nil
+}
